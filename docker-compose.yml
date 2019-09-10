@@ -1,0 +1,47 @@
+version: "3.7"
+
+services:
+  seafile:
+    image: seafileltd/seafile:latest
+    volumes:
+      - /home/ubuntu/seafile:/shared
+    expose:
+      - "80"
+    networks:
+      - seafile-network
+      - traefik-network
+    environment:
+      # to change
+      - SEAFILE_SERVER_HOSTNAME=seafile.<domain>
+      - SEAFILE_ADMIN_EMAIL=me@example.com
+      - SEAFILE_ADMIN_PASSWORD=a_very_secret_password
+    labels:
+      - traefik.enable=true
+      - traefik.backend=seafile
+      - traefik.port=80
+      # to change
+      - traefik.frontend.rule=Host:seafile.<domain>
+
+  traefik:
+    traefik: 
+    image: traefik
+    restart: always
+    ports: 
+      - "443:443"
+      - "80:80"
+    volumes: 
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik/traefik.toml:/etc/traefik/traefik.toml
+      - ./traefik/acme.json:/acme.json
+    networks:
+      - traefik-network
+    labels:
+      - "traefik.enable=false"
+      - "traefik.backend=traefik"
+      - "traefik.port=8080"
+      # to change
+      - "traefik.frontend.rule=Host:traefik.<domain>"
+
+networks:
+  seafile-network:
+    driver: bridge
